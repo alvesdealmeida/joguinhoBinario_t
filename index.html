@@ -174,6 +174,24 @@
             .pane { padding: 30px 10px; }
             .binary-list { letter-spacing: 3px; }
         }
+        .badge-teste {
+    background-color: #f59e0b; /* Amarelo alerta */
+    color: #000;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
     </style>
 </head>
 <body>
@@ -201,6 +219,10 @@
 <div id="jogoTela" class="screen">
     <div class="game-header">
         <button class="action-btn btn-ghost" onclick="irParaHome()">⬅ Menu</button>
+        
+        <!-- LOCAL DO TEXTO "EM TESTE" -->
+        <span class="badge-teste">Em teste</span>
+        
         <div id="statusFase" style="font-weight: bold; color: #00bcff;">Fase Ativa</div>
         <div style="font-size: 14px; color: #9ca3af;">Modo: Binário para Pixel</div>
     </div>
