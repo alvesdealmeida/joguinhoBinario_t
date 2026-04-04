@@ -106,7 +106,6 @@
             color: var(--accent-green);
         }
 
-        /* AJUSTE: BOTÃO ENVIAR IMAGEM MENOR E CENTRALIZADO */
         .btn-upload {
             display: inline-flex; 
             align-items: center;
@@ -120,19 +119,16 @@
             border-radius: 8px; font-weight: bold; font-size: 0.85rem; cursor: pointer;
         }
 
-        /* AJUSTES CABEÇALHO JOGO */
         .game-header { 
             width: 100%; display: flex; justify-content: space-between; 
             align-items: center; padding: 10px 15px; box-sizing: border-box; 
         }
 
-        /* BOTÃO MENU MENOR */
         .btn-menu-small {
             padding: 6px 12px !important;
             font-size: 0.75rem !important;
         }
 
-        /* EM TESTE MENOR */
         .badge-teste {
             background-color: #f59e0b;
             color: #000;
@@ -143,7 +139,6 @@
             text-transform: uppercase;
         }
 
-        /* TEXTOS DE FASE MENORES */
         #statusFase { font-size: 0.9rem; font-weight: bold; color: #00bcff; }
         .modo-text { font-size: 11px !important; color: #6b7280; }
 
@@ -170,7 +165,6 @@
         }
         .cell.active { background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
 
-        /* AJUSTE BOTÕES DE AÇÃO */
         button.action-btn {
             padding: 10px 16px; border: none; border-radius: 8px;
             font-weight: bold; cursor: pointer; font-size: 0.8rem;
@@ -241,7 +235,6 @@
     </div>
 
     <div class="controls">
-        <!-- BOTÃO COMPILAR COM ÍCONE E TAMANHO AJUSTADO -->
         <button class="action-btn btn-success" onclick="validar()">⚙️ COMPILAR</button>
         <button class="action-btn btn-primary" onclick="baixarDesafio()">📥 PNG</button>
         <button class="action-btn btn-ghost" onclick="limpar()">🧹 RESET</button>
@@ -251,7 +244,6 @@
 <canvas id="helperCanvas" style="display:none;"></canvas>
 
 <script>
-    /* Lógica original preservada integralmente */
     const fileInput = document.getElementById('fileInput');
     const helperCanvas = document.getElementById('helperCanvas');
     const ctx = helperCanvas.getContext('2d');
@@ -272,6 +264,17 @@
             else { btn.classList.add('bloqueada'); btn.classList.remove('liberada'); }
         }
     }
+
+    /* NOVA REGRA: RESET AO VOLTAR PARA O APP */
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            const telaJogo = document.getElementById('jogoTela');
+            if (telaJogo.classList.contains('active')) {
+                alert("⚠️ Sessão interrompida! Retornando ao menu.");
+                irParaHome(); 
+            }
+        }
+    });
 
     function jogarFaseFica(idx) {
         if (idx <= faseDesbloqueada) {
