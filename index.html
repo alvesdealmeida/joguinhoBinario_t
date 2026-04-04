@@ -98,22 +98,26 @@
             border: 2px solid rgba(255, 255, 255, 0.1);
             color: #4b5563;
             position: relative;
+            cursor: default;
         }
         .fase-btn span { font-size: 0.55rem; text-transform: uppercase; margin-top: 2px; }
 
+        /* ESTADO LIBERADO */
         .fase-btn.liberada {
             background: rgba(0, 255, 102, 0.1);
             border-color: var(--accent-green);
             color: var(--accent-green);
-            opacity: 1 !important;
+            opacity: 1;
             cursor: pointer;
+            pointer-events: auto; /* Garante que o clique funcione */
         }
 
+        /* ESTADO BLOQUEADO */
         .fase-btn.bloqueada {
-            cursor: not-allowed;
             opacity: 0.3;
             filter: grayscale(1);
-            pointer-events: none; /* Bloqueia clique no nível do navegador */
+            cursor: not-allowed !important;
+            pointer-events: none !important; /* Impede QUALQUER interação do mouse/touch */
         }
 
         .fase-btn.bloqueada::after {
@@ -213,7 +217,6 @@
         <p style="font-size: 0.85rem; color: #9ca3af;">Lógica de Programação Visual</p>
         
         <div class="mapa-fases">
-            <!-- IDs mantidos, mas onclick removido do HTML para controle via script -->
             <div id="fase1" class="fase-btn">1<span>Fácil</span></div>
             <div id="fase2" class="fase-btn">2<span>Médio</span></div>
             <div id="fase3" class="fase-btn">3<span>Difícil</span></div>
@@ -265,9 +268,7 @@
     let mapaBinario = [];
     let faseAtualIndex = 0;
     
-    // Carrega progresso
-    let faseDesbloqueada = parseInt(localStorage.getItem('progressoBinario')) || 0;
-
+    // Lista de desafios
     const desafiosDoSistema = [
         { nome: "Fase 1: Geometria", dados: ["011110","100001","100001","100001","100001","011110"] },
         { nome: "Fase 2: O Alien", dados: ["0001111000","0011111100","0111111110","1111111111","1100110011","1100110011","1111111111","0110000110","0011111100","0001111000"] },
@@ -275,25 +276,28 @@
     ];
 
     function atualizarMapaVisual() {
-        // Recarrega o valor do progresso
-        faseDesbloqueada = parseInt(localStorage.getItem('progressoBinario')) || 0;
+        // Pega o progresso salvo. Se não houver, começa no 0 (Fase 1 liberada)
+        let faseDesbloqueada = parseInt(localStorage.getItem('progressoBinario')) || 0;
 
         for (let i = 0; i < 3; i++) {
             const btn = document.getElementById(`fase${i+1}`);
             
-            // Remove evento de clique existente para evitar bugs
+            // SEMPRE remove o evento anterior para garantir que não haja "sobreposição" de cliques
             btn.onclick = null;
 
             if (i <= faseDesbloqueada) {
-                btn.classList.add('liberada');
+                // LIBERADO
                 btn.classList.remove('bloqueada');
-                btn.style.pointerEvents = "auto";
-                // Atribui a função de clique apenas se estiver liberada
-                btn.onclick = () => jogarFase(i);
+                btn.classList.add('liberada');
+                btn.onclick = function() { jogarFase(i); };
             } else {
-                btn.classList.add('bloqueada');
+                // BLOQUEADO
                 btn.classList.remove('liberada');
-                btn.style.pointerEvents = "none";
+                btn.classList.add('bloqueada');
+                btn.onclick = function(e) { 
+                    e.preventDefault(); 
+                    return false; 
+                };
             }
         }
     }
@@ -313,12 +317,16 @@
         const grid = document.getElementById('gridDisplay');
         grid.innerHTML = "";
         grid.style.gridTemplateColumns = `repeat(${colunas}, 1fr)`;
+        
         mapaBinario.forEach(linha => {
             [...linha].forEach(bit => {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
                 cell.dataset.bit = bit;
-                cell.onclick = () => { cell.classList.toggle('active'); cell.classList.remove('correct', 'wrong'); };
+                cell.onclick = () => { 
+                    cell.classList.toggle('active'); 
+                    cell.classList.remove('correct', 'wrong'); 
+                };
                 grid.appendChild(cell);
             });
         });
@@ -338,14 +346,20 @@
         if (!erro) {
             setTimeout(() => {
                 alert("🎉 Algoritmo Compilado com Sucesso!");
-                // Libera a próxima fase se for a atual
-                if (faseAtualIndex === faseDesbloqueada && faseDesbloqueada < 2) {
-                    faseDesbloqueada++;
-                    localStorage.setItem('progressoBinario', faseDesbloqueada);
+                
+                // Lógica de Desbloqueio: 
+                // Se terminei a fase 0 (Fase 1), desbloqueio a 1 (Fase 2).
+                let progressoAtual = parseInt(localStorage.getItem('progressoBinario')) || 0;
+                if (faseAtualIndex === progressoAtual) {
+                    let novoProgresso = faseAtualIndex + 1;
+                    if (novoProgresso > 2) novoProgresso = 2; // Limite de 3 fases (índice 2)
+                    localStorage.setItem('progressoBinario', novoProgresso);
                 }
                 irParaHome();
             }, 300);
-        } else { alert("❌ Erro de Sintaxe! Verifique os pixels."); }
+        } else { 
+            alert("❌ Erro de Sintaxe! Verifique os pixels ativos."); 
+        }
     }
 
     function irParaHome() {
@@ -355,64 +369,22 @@
         atualizarMapaVisual();
     }
 
-    // Gerenciador de visibilidade (anti-congelamento)
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden' && document.getElementById('jogoTela').classList.contains('active')) {
-            sessionStorage.setItem('resetsession', 'true');
-        } else if (document.visibilityState === 'visible' && sessionStorage.getItem('resetsession')) {
-            sessionStorage.removeItem('resetsession');
-            window.location.reload();
-        }
-    });
-
-    fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => {
-                let w = img.width, h = img.height;
-                const max = 20;
-                if (w > max || h > max) {
-                    const ratio = Math.min(max / w, max / h);
-                    w = Math.floor(w * ratio); h = Math.floor(h * ratio);
-                }
-                helperCanvas.width = w; helperCanvas.height = h;
-                ctx.drawImage(img, 0, 0, w, h);
-                const data = ctx.getImageData(0, 0, w, h).data;
-                mapaBinario = [];
-                for (let y = 0; y < h; y++) {
-                    let linha = "";
-                    for (let x = 0; x < w; x++) {
-                        const i = (y * w + x) * 4;
-                        const lum = (data[i] + data[i+1] + data[i+2]) / 3;
-                        linha += (lum < 128 && data[i+3] > 50) ? "1" : "0";
-                    }
-                    mapaBinario.push(linha);
-                }
-                document.getElementById('statusFase').textContent = "Personalizado";
-                montarJogo(w);
-            };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
-
-    function limpar() { document.querySelectorAll('.cell').forEach(c => c.classList.remove('active', 'correct', 'wrong')); }
+    function limpar() { 
+        document.querySelectorAll('.cell').forEach(c => c.classList.remove('active', 'correct', 'wrong')); 
+    }
 
     function baixarDesafio() {
         const target = document.getElementById('captureTarget');
         html2canvas(target, { backgroundColor: '#0b0f19' }).then(canvas => {
             const link = document.createElement('a');
-            link.download = 'algoritmo-pixel.png';
+            link.download = 'meu-codigo-pixel.png';
             link.href = canvas.toDataURL();
             link.click();
         });
     }
 
-    // Inicialização
-    atualizarMapaVisual();
+    // Inicialização ao carregar a página
+    window.onload = atualizarMapaVisual;
 </script>
 </body>
 </html>
