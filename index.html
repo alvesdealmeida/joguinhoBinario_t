@@ -39,7 +39,6 @@
         .screen { display: none; width: 100%; height: 100%; flex-direction: column; }
         .active { display: flex; }
 
-        /* MENU PRINCIPAL */
         .menu-container { 
             margin: auto; 
             text-align: center; 
@@ -67,20 +66,19 @@
             border: 2px solid #222; 
             border-radius: 20px; 
             color: #fff; 
-            cursor: not-allowed; /* Padrão bloqueado */
+            cursor: not-allowed;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             font-size: 1.1rem;
             font-weight: bold;
-            opacity: 0.3; /* Visual bloqueado */
+            opacity: 0.3;
             transition: 0.3s;
         }
         
         .fase-btn small { font-size: 0.65rem; margin-top: 4px; opacity: 0.7; }
 
-        /* Estilo para quando o nível está liberado */
         .fase-btn.liberada { 
             border-color: var(--accent); 
             opacity: 1; 
@@ -88,7 +86,6 @@
             box-shadow: 0 0 10px rgba(0, 255, 102, 0.1);
         }
 
-        /* JOGO */
         .header-jogo {
             width: 100%;
             padding: 15px 20px;
@@ -115,8 +112,8 @@
             padding: 15px;
             border-radius: 12px;
             color: var(--accent);
-            font-size: 1.2rem;
-            letter-spacing: 6px;
+            font-size: 1.1rem;
+            letter-spacing: 4px;
             border: 1px solid #333;
             margin-bottom: 20px;
             text-align: center;
@@ -132,7 +129,7 @@
         }
 
         .cell { 
-            width: 38px; height: 38px; 
+            width: 35px; height: 35px; 
             background: rgba(60, 60, 60, 0.3); 
             border-radius: 4px; 
             border: 1px solid #555;
@@ -216,7 +213,6 @@
 <canvas id="helperCanvas" style="display:none;"></canvas>
 
 <script>
-    /* FUNDO MATRIX */
     const mCanvas = document.getElementById('matrixBg');
     const mCtx = mCanvas.getContext('2d');
     let drops = [];
@@ -236,15 +232,35 @@
     }
     initMatrix(); setInterval(drawMatrix, 50);
 
-    /* LÓGICA DO JOGO */
+    const BD_DESENHOS = [
+        [ // NÍVEL 1 (4x4)
+            {m: ["0110", "1111", "1111", "0110"], n: "Cápsula"},
+            {m: ["1001", "0110", "0110", "1001"], n: "X-Virus"},
+            {m: ["0110", "1111", "0110", "0110"], n: "Espada"},
+            {m: ["1111", "1001", "1001", "1111"], n: "Frame"},
+            {m: ["0110", "1111", "1111", "1001"], n: "Corpo"}
+        ],
+        [ // NÍVEL 2 (6x6)
+            {m: ["011110", "100001", "101101", "101101", "100001", "011110"], n: "Visor"},
+            {m: ["001100", "011110", "111111", "111111", "011110", "001100"], n: "Orb"},
+            {m: ["110011", "110011", "001100", "001100", "110011", "111111"], n: "Chip"},
+            {m: ["011110", "010010", "010010", "011110", "011110", "111111"], n: "Tanque"},
+            {m: ["001100", "001100", "111111", "111111", "110011", "110011"], n: "Torre"}
+        ],
+        [ // NÍVEL 3 (8x8)
+            {m: ["00111100", "01111110", "11011011", "11111111", "11111111", "11011011", "01111110", "00111100"], n: "Caveira"},
+            {m: ["00011000", "00111100", "01111110", "11111111", "00111100", "00111100", "01111110", "11111111"], n: "Foguete"},
+            {m: ["11111111", "10000001", "10111101", "10111101", "10111101", "10111101", "10000001", "11111111"], n: "Portal"},
+            {m: ["00111100", "01000010", "10100101", "10000001", "10011001", "10100101", "01000010", "00111100"], n: "Ghost"},
+            {m: ["11111111", "11011011", "11011011", "00000000", "00111100", "00111100", "00111100", "00111100"], n: "Martelo"}
+        ]
+    ];
+
     let mapaBinario = [];
     let nivelAtual = 0;
-    
-    // Progresso salvo (0 = apenas nível 1 aberto, 1 = nível 2 aberto, 2 = nível 3 aberto)
     let progresso = parseInt(localStorage.getItem('pixelProgresso')) || 0;
 
     function jogarNivel(idx) {
-        // CRUCIAL: Bloqueia o clique se o nível for maior que o progresso atual
         if(idx > progresso) {
             alert("Acesso negado. Complete o módulo anterior!");
             return;
@@ -254,15 +270,13 @@
         const temas = ["#00ff66", "#38bdf8", "#ff3e00"];
         document.documentElement.style.setProperty('--accent', temas[idx]);
         
-        const dados = [
-            {m: ["0110", "1111", "1111", "0110"], n: "Bateria"},
-            {m: ["011110", "100001", "101101", "101101", "100001", "011110"], n: "Visor"},
-            {m: ["00111100", "01111110", "11011011", "11111111", "11111111", "11011011", "01111110", "00111100"], n: "Mainframe"}
-        ];
+        // Sorteia um desenho da lista
+        const listaSorteio = BD_DESENHOS[idx];
+        const sorteado = listaSorteio[Math.floor(Math.random() * listaSorteio.length)];
         
-        mapaBinario = dados[idx].m;
+        mapaBinario = sorteado.m;
         document.getElementById('statusFase').textContent = `MÓDULO 0${idx+1}`;
-        document.getElementById('nomeObjeto').textContent = dados[idx].n;
+        document.getElementById('nomeObjeto').textContent = sorteado.n;
         montarJogo();
     }
 
@@ -274,6 +288,7 @@
         grid.innerHTML = "";
         const colunas = mapaBinario[0].length;
         grid.style.gridTemplateColumns = `repeat(${colunas}, 1fr)`;
+        
         mapaBinario.forEach(linha => {
             [...linha].forEach(bit => {
                 const cell = document.createElement('div');
@@ -295,14 +310,17 @@
         });
 
         if(!erro) {
-            alert("✓ CÓDIGO COMPILADO!");
-            
-            // Se o nível que eu acabei de fazer for igual ao meu progresso, libero o próximo
-            if(nivelAtual === progresso) {
+            if(nivelAtual === 2) {
+                alert("✓ SISTEMA TOTALMENTE DECODIFICADO! REINICIANDO MATRIX...");
+                progresso = 0;
+                localStorage.setItem('pixelProgresso', 0);
+            } else if(nivelAtual === progresso) {
+                alert("✓ CÓDIGO COMPILADO!");
                 progresso++;
                 localStorage.setItem('pixelProgresso', progresso);
+            } else {
+                alert("✓ CÓDIGO COMPILADO!");
             }
-            
             irParaHome();
         } else {
             alert("× ERRO NA SEQUÊNCIA!");
@@ -326,7 +344,6 @@
         }
     }
 
-    // Processamento de imagem externa (mantém a lógica anterior)
     document.getElementById('fileInput').onchange = function(e) {
         const reader = new FileReader();
         reader.onload = function(event) {
@@ -334,21 +351,33 @@
             img.onload = function() {
                 const hCanvas = document.getElementById('helperCanvas');
                 const hCtx = hCanvas.getContext('2d');
-                const size = [4, 6, 8][nivelAtual];
-                hCanvas.width = size; hCanvas.height = size;
-                hCtx.drawImage(img, 0, 0, size, size);
-                const pixels = hCtx.getImageData(0, 0, size, size).data;
-                mapaBinario = [];
-                for (let y = 0; y < size; y++) {
+                
+                // Define tamanho do grid baseado no progresso (ou nível 1 por padrão)
+                const sizes = [4, 6, 8];
+                const activeSize = sizes[progresso >= 3 ? 2 : progresso];
+                
+                hCanvas.width = activeSize; 
+                hCanvas.height = activeSize;
+                
+                hCtx.drawImage(img, 0, 0, activeSize, activeSize);
+                const pixels = hCtx.getImageData(0, 0, activeSize, activeSize).data;
+                
+                let novoMapa = [];
+                for (let y = 0; y < activeSize; y++) {
                     let linha = "";
-                    for (let x = 0; x < size; x++) {
-                        const i = (y * size + x) * 4;
+                    for (let x = 0; x < activeSize; x++) {
+                        const i = (y * activeSize + x) * 4;
+                        // Cálculo de brilho (preto e branco)
                         const avg = (pixels[i] + pixels[i+1] + pixels[i+2]) / 3;
-                        linha += (avg < 135) ? "1" : "0";
+                        linha += (avg < 128) ? "1" : "0";
                     }
-                    mapaBinario.push(linha);
+                    novoMapa.push(linha);
                 }
-                document.getElementById('nomeObjeto').textContent = "UPLOAD.SYS";
+                
+                // Injeta o mapa no jogo
+                mapaBinario = novoMapa;
+                nivelAtual = progresso >= 3 ? 2 : progresso;
+                document.getElementById('nomeObjeto').textContent = "EXTERNO.RAW";
                 montarJogo();
                 e.target.value = ""; 
             };
@@ -361,7 +390,6 @@
         document.querySelectorAll('.cell').forEach(c => c.classList.remove('active'));
     }
 
-    // Inicializa o menu com os níveis certos abertos
     atualizarBotoesMenu();
 </script>
 </body>
