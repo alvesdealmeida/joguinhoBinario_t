@@ -265,13 +265,13 @@
         }
     }
 
-    /* NOVA REGRA: RESET AO VOLTAR PARA O APP */
+    /* REGRA HARD: RECARREGA A PÁGINA AO VOLTAR PARA O APP */
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
             const telaJogo = document.getElementById('jogoTela');
-            if (telaJogo.classList.contains('active')) {
-                alert("⚠️ Sessão interrompida! Retornando ao menu.");
-                irParaHome(); 
+            // Só recarrega se o usuário estiver de fato em uma fase ativa
+            if (telaJogo && telaJogo.classList.contains('active')) {
+                window.location.reload(); 
             }
         }
     });
