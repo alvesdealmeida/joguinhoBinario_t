@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pixel Binário | Mobile Decoder</title>
+    <title>Pixel Binário | Matrix Edition</title>
     <style>
         :root {
             --bg: #000000;
             --accent: #00ff66;
             --text: #ffffff;
             --secondary: #555555;
-            --cell-size: 45px;
         }
 
         body, html {
@@ -22,25 +21,28 @@
             overflow: hidden;
         }
 
-        /* BLOQUEIO PARA DESKTOP */
+        /* --- RESTRIÇÃO DESKTOP E TELA DE NEGADO --- */
         #desktop-blocker {
             display: none;
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: #000;
+            background: rgba(0, 0, 0, 0.85); 
             z-index: 10000;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            border: 10px solid #111;
             box-sizing: border-box;
+            backdrop-filter: blur(5px);
+            border: 10px solid #111;
         }
 
+        /* Ativa o bloqueio apenas em PCs (telas maiores que 1024px) */
         @media (min-width: 1025px) {
             #desktop-blocker { display: flex; }
-            #app-container, #matrixBg { display: none; }
+            #app-container { display: none; }
+            #matrixBg { z-index: 1; opacity: 0.2; } /* Matrix visível no fundo da tela de erro */
         }
 
         #matrixBg {
@@ -48,7 +50,7 @@
             top: 0; left: 0;
             width: 100vw; height: 100vh;
             z-index: 1;
-            opacity: 0.3;
+            opacity: 0.25;
         }
 
         #app-container {
@@ -61,87 +63,187 @@
         .screen { display: none; width: 100%; height: 100%; flex-direction: column; }
         .active { display: flex; }
 
-        .menu-container { margin: auto; text-align: center; width: 85%; z-index: 5; }
+        .menu-container { 
+            margin: auto; 
+            text-align: center; 
+            background: rgba(0,0,0,0.85); 
+            padding: 30px 15px; 
+            border-radius: 30px; 
+            border: 1px solid #222; 
+            width: 90%;
+            max-width: 400px;
+        }
 
         .fases-wrapper {
-            display: flex; justify-content: center;
-            gap: 12px; margin: 25px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            width: 100%;
         }
 
         .fase-btn { 
-            flex: 1; height: 90px; 
-            background: rgba(10,10,10,0.8); border: 2px solid #222; 
-            border-radius: 20px; color: #fff; cursor: pointer;
-            display: flex; flex-direction: column; align-items: center;
-            justify-content: center; font-size: 1.2rem; font-weight: bold;
-            transition: 0.3s; opacity: 0.3;
+            flex: 1; 
+            max-width: 90px;
+            height: 85px; 
+            background: #0a0a0a; 
+            border: 2px solid #222; 
+            border-radius: 20px; 
+            color: #fff; 
+            cursor: not-allowed;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            opacity: 0.3;
+            transition: 0.3s;
         }
         
-        .fase-btn.liberada { border-color: var(--accent); opacity: 1; box-shadow: 0 0 15px rgba(0,255,102,0.2); }
+        .fase-btn small { font-size: 0.65rem; margin-top: 4px; opacity: 0.7; }
+
+        .fase-btn.liberada { 
+            border-color: var(--accent); 
+            opacity: 1; 
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 255, 102, 0.1);
+        }
 
         .header-jogo {
-            padding: 20px; background: rgba(0, 0, 0, 0.9);
-            border-bottom: 1px solid #222; display: flex;
-            justify-content: space-between; align-items: center;
+            width: 100%;
+            padding: 15px 20px;
+            box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.9);
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        #timer-display { font-family: monospace; font-size: 1.6rem; color: #ff3e00; font-weight: bold; }
+        #timer-display {
+            font-family: monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #ff3e00;
+        }
 
-        .game-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; }
+        .game-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
 
         .binary-box {
-            font-family: 'Courier New', monospace; background: rgba(10,10,10,0.9);
-            padding: 15px; border-radius: 12px; color: var(--accent);
-            font-size: 1.1rem; letter-spacing: 5px; margin-bottom: 20px;
-            border: 1px solid #333; text-align: center;
+            font-family: 'Courier New', monospace;
+            background: rgba(10, 10, 10, 0.8);
+            padding: 15px;
+            border-radius: 12px;
+            color: var(--accent);
+            font-size: 1.1rem;
+            letter-spacing: 4px;
+            border: 1px solid #333;
+            margin-bottom: 20px;
+            text-align: center;
+            line-height: 1.2;
         }
 
-        .grid { display: grid; gap: 6px; padding: 15px; background: rgba(20,20,20,0.9); border-radius: 15px; border: 1px solid #333; }
+        .grid { 
+            display: grid; 
+            gap: 5px; 
+            padding: 10px; 
+            background: rgba(20, 20, 20, 0.9); 
+            border-radius: 12px; 
+            border: 1px solid #444;
+        }
 
-        .cell { width: var(--cell-size); height: var(--cell-size); background: #222; border-radius: 6px; border: 1px solid #444; transition: 0.1s; }
+        .cell { 
+            width: 35px; height: 35px; 
+            background: rgba(60, 60, 60, 0.3); 
+            border-radius: 4px; 
+            border: 1px solid #555;
+            transition: 0.1s;
+        }
         .cell.active { background: var(--accent); box-shadow: 0 0 15px var(--accent); border-color: #fff; }
 
-        .footer-controls { padding: 20px; background: #000; display: flex; gap: 15px; border-top: 1px solid #222; }
+        .footer-controls {
+            width: 100%;
+            padding: 15px 20px;
+            box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.95);
+            border-top: 1px solid #222;
+            display: flex;
+            gap: 12px;
+        }
 
-        .btn-game { flex: 1; padding: 18px; border-radius: 15px; font-weight: 900; border: none; text-transform: uppercase; cursor: pointer; }
+        .btn-game {
+            flex: 1;
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            cursor: pointer;
+            border: none;
+        }
         .btn-compilar { background: var(--accent); color: #000; }
         .btn-limpar { background: transparent; color: #fff; border: 1px solid #444; }
 
-        @media (max-width: 400px) { :root { --cell-size: 35px; } }
+        #fileInput { display: none; }
+        .upload-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--accent);
+            text-decoration: underline;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Ajustes específicos para Tablet e Celular (ajuste de tamanho de grid) */
+        @media (max-width: 480px) {
+            .cell { width: 30px; height: 30px; }
+            .menu-container h1 { font-size: 1.8rem; }
+        }
     </style>
 </head>
 <body>
 
+<!-- TELA DE BLOQUEIO DESKTOP -->
 <div id="desktop-blocker">
-    <h1 style="color: var(--accent); font-size: 3rem; margin: 0;">OFFLINE</h1>
-    <p style="letter-spacing: 2px;">ACESSO RESTRITO A DISPOSITIVOS MÓVEIS</p>
-    <div style="font-family: monospace; opacity: 0.5;">ERR_NON_PORTABLE_DEVICE</div>
+    <h1 style="color: #ff3e00; font-size: 2.5rem; margin: 0; text-shadow: 0 0 10px #ff3e00;">ACESSO NEGADO</h1>
+    <p style="letter-spacing: 2px; color: #ccc; margin-top: 10px;">CONEXÃO MOBILE REQUERIDA</p>
+    <div style="font-family: monospace; opacity: 0.5; margin-top: 20px; color: var(--accent);">[ SISTEMA TRAVADO PARA PC ]</div>
 </div>
 
 <canvas id="matrixBg"></canvas>
 
 <div id="app-container">
-    <!-- MENU -->
     <div id="telaMenu" class="screen active">
         <div class="menu-container">
-            <h1 style="font-size: 2.2rem; margin:0; letter-spacing:-1px;">PIXEL BINÁRIO</h1>
-            <p style="color:var(--secondary); font-size:0.7rem; letter-spacing:4px;">TERMINAL DECODIFICADOR</p>
+            <h1 style="margin:0; letter-spacing:-2px; font-size: 2.2rem;">PIXEL BINÁRIO</h1>
+            <p style="color:var(--secondary); font-size:0.7rem; letter-spacing: 2px;">MATRIX DECODER</p>
+            
             <div class="fases-wrapper">
-                <button id="fase0" class="fase-btn" onclick="jogarNivel(0)">01</button>
-                <button id="fase1" class="fase-btn" onclick="jogarNivel(1)">02</button>
-                <button id="fase2" class="fase-btn" onclick="jogarNivel(2)">03</button>
+                <button id="fase0" class="fase-btn" onclick="jogarNivel(0)">01<br><small>Fácil</small></button>
+                <button id="fase1" class="fase-btn" onclick="jogarNivel(1)">02<br><small>Médio</small></button>
+                <button id="fase2" class="fase-btn" onclick="jogarNivel(2)">03<br><small>Hard</small></button>
             </div>
+
+            <label for="fileInput" class="upload-link">INJETAR CÓDIGO EXTERNO</label>
+            <input type="file" id="fileInput" accept="image/*">
         </div>
     </div>
 
-    <!-- JOGO -->
     <div id="jogoTela" class="screen">
         <div class="header-jogo">
-            <button onclick="irParaHome()" style="background:none; border:1px solid #444; color:#888; padding:8px 15px; border-radius:10px;">VOLTAR</button>
+            <button onclick="irParaHome()" style="background:none; border:1px solid #444; color:#888; padding:8px 15px; border-radius:8px;">SAIR</button>
             <div id="timer-display">00:00</div>
             <div style="text-align:right">
-                <div id="statusFase" style="color:var(--accent); font-weight:bold; font-size:0.6rem;">MOD_01</div>
-                <div id="nomeObjeto" style="font-weight:900; font-size:0.8rem;">DATA.EXE</div>
+                <div id="statusFase" style="color:var(--accent); font-weight:bold; font-size:0.7rem;">MÓDULO 01</div>
+                <div id="nomeObjeto" style="font-weight:900;">OBJETO.EXE</div>
             </div>
         </div>
         <div class="game-content">
@@ -149,108 +251,155 @@
             <div id="gridDisplay" class="grid"></div>
         </div>
         <div class="footer-controls">
-            <button class="btn-game btn-limpar" onclick="limpar()">Limpar</button>
+            <button class="btn-game btn-limpar" onclick="limpar()">Reset</button>
             <button class="btn-game btn-compilar" onclick="validar()">Compilar</button>
         </div>
     </div>
 </div>
 
+<canvas id="helperCanvas" style="display:none;"></canvas>
+
 <script>
-    // --- SISTEMA DE SOM ---
+    // --- LÓGICA DE ÁUDIO ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playSfx(freq, type, dur, vol = 0.1) {
-        if(audioCtx.state === 'suspended') audioCtx.resume();
+    
+    function playSound(freq, type, duration, vol = 0.2) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = type;
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
         gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + dur);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
     }
 
-    const sons = {
-        click: () => playSfx(600, 'square', 0.1),
-        sucesso: () => { playSfx(500, 'sine', 0.2); setTimeout(()=>playSfx(800, 'sine', 0.4), 150); },
-        erro: () => playSfx(150, 'sawtooth', 0.4, 0.2),
-        tick: () => playSfx(1200, 'sine', 0.05, 0.05)
+    const sfx = {
+        click: () => playSound(600, 'square', 0.05, 0.1),
+        win: () => {
+            playSound(400, 'sine', 0.2);
+            setTimeout(() => playSound(600, 'sine', 0.2), 100);
+            setTimeout(() => playSound(800, 'sine', 0.4), 200);
+        },
+        error: () => playSound(150, 'sawtooth', 0.4, 0.3),
+        tick: () => playSound(1200, 'sine', 0.02, 0.05)
     };
 
-    // --- EFEITO MATRIX ---
-    const canvas = document.getElementById('matrixBg');
-    const ctx = canvas.getContext('2d');
+    // --- MATRIX BACKGROUND ---
+    const mCanvas = document.getElementById('matrixBg');
+    const mCtx = mCanvas.getContext('2d');
     let drops = [];
     function initMatrix() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        drops = Array(Math.floor(canvas.width / 18)).fill(1);
+        mCanvas.width = window.innerWidth; mCanvas.height = window.innerHeight;
+        drops = Array(Math.floor(mCanvas.width/18)).fill(1);
     }
     function drawMatrix() {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#0f6";
-        ctx.font = "15px monospace";
+        mCtx.fillStyle = "rgba(0,0,0,0.08)"; mCtx.fillRect(0,0,mCanvas.width,mCanvas.height);
+        mCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent');
+        mCtx.font = "15px monospace";
         drops.forEach((y, i) => {
-            const text = Math.floor(Math.random() * 2);
-            ctx.fillText(text, i * 18, y * 18);
-            if (y * 18 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            mCtx.fillText(Math.floor(Math.random()*2), i*18, y*18);
+            if(y*18 > mCanvas.height && Math.random() > 0.98) drops[i] = 0;
             drops[i]++;
         });
     }
-    window.addEventListener('resize', initMatrix);
     initMatrix(); setInterval(drawMatrix, 50);
 
-    // --- LÓGICA DO JOGO ---
-    const NIVEIS = [
-        {m:["0110","1111","1111","0110"], n:"CÁPSULA", t:30},
-        {m:["011110","100001","101101","101101","100001","011110"], n:"VISOR", t:45},
-        {m:["00111100","01111110","11011011","11111111","11111111","11011011","01111110","00111100"], n:"CORE", t:60}
+    // --- GAME DATA ---
+    const NIVEIS_DATA = [
+        [
+            {m: ["0110", "1111", "1111", "0110"], n: "Cápsula", t: 30},
+            {m: ["1001", "0110", "0110", "1001"], n: "X-Virus", t: 30},
+            {m: ["0110", "1111", "0110", "0110"], n: "Espada", t: 30}
+        ],
+        [
+            {m: ["011110", "100001", "101101", "101101", "100001", "011110"], n: "Visor", t: 45},
+            {m: ["001100", "011110", "111111", "111111", "011110", "001100"], n: "Orbital", t: 45}
+        ],
+        [
+            {m: ["00111100", "01111110", "11011011", "11111111", "11111111", "11011011", "01111110", "00111100"], n: "Mainframe", t: 60},
+            {m: ["11111111", "10000001", "10111101", "10111101", "10111101", "10111101", "10000001", "11111111"], n: "Processador", t: 60}
+        ]
     ];
 
+    let mapaBinario = [];
     let nivelAtual = 0;
+    let tempoRestante = 0;
     let timerId = null;
     let progresso = parseInt(localStorage.getItem('pixelProgresso')) || 0;
 
     function jogarNivel(idx) {
-        if(idx > progresso) { sons.erro(); return; }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        if(idx > progresso) {
+            sfx.error();
+            alert("Acesso negado. Complete o módulo anterior!");
+            return;
+        }
+
         nivelAtual = idx;
-        const dados = NIVEIS[idx];
+        const temas = ["#00ff66", "#38bdf8", "#ff3e00"];
+        document.documentElement.style.setProperty('--accent', temas[idx]);
         
-        document.getElementById('telaMenu').classList.remove('active');
-        document.getElementById('jogoTela').classList.add('active');
-        document.getElementById('binaryDisplay').innerHTML = dados.m.join('<br>');
-        document.getElementById('nomeObjeto').textContent = dados.n;
-        document.getElementById('statusFase').textContent = `MOD_0${idx+1}`;
-
-        const grid = document.getElementById('gridDisplay');
-        grid.innerHTML = "";
-        grid.style.gridTemplateColumns = `repeat(${dados.m[0].length}, 1fr)`;
+        const desenhosDoNivel = NIVEIS_DATA[idx];
+        const sorteio = desenhosDoNivel[Math.floor(Math.random() * desenhosDoNivel.length)];
         
-        dados.m.forEach(linha => {
-            [...linha].forEach(bit => {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.dataset.bit = bit;
-                cell.onclick = () => { sons.click(); cell.classList.toggle('active'); };
-                grid.appendChild(cell);
-            });
-        });
-
-        iniciarTimer(dados.t);
+        mapaBinario = sorteio.m;
+        document.getElementById('statusFase').textContent = `MÓDULO 0${idx+1}`;
+        document.getElementById('nomeObjeto').textContent = sorteio.n;
+        
+        montarJogo();
+        iniciarTimer(sorteio.t);
     }
 
     function iniciarTimer(segundos) {
         clearInterval(timerId);
-        let t = segundos;
-        const display = document.getElementById('timer-display');
+        tempoRestante = segundos;
+        atualizarVisualTimer();
         timerId = setInterval(() => {
-            t--;
-            let m = Math.floor(t/60), s = t%60;
-            display.textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-            if(t <= 5 && t > 0) sons.tick();
-            if(t <= 0) { clearInterval(timerId); sons.erro(); alert("TEMPO ESGOTADO!"); irParaHome(); }
+            tempoRestante--;
+            if(tempoRestante <= 5 && tempoRestante > 0) sfx.tick();
+            atualizarVisualTimer();
+            if(tempoRestante <= 0) {
+                clearInterval(timerId);
+                sfx.error();
+                alert("TEMPO ESGOTADO! Conexão perdida.");
+                irParaHome();
+            }
         }, 1000);
+    }
+
+    function atualizarVisualTimer() {
+        const min = Math.floor(tempoRestante / 60);
+        const seg = tempoRestante % 60;
+        document.getElementById('timer-display').textContent = 
+            `${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`;
+    }
+
+    function montarJogo() {
+        document.getElementById('telaMenu').classList.remove('active');
+        document.getElementById('jogoTela').classList.add('active');
+        document.getElementById('binaryDisplay').innerHTML = mapaBinario.join('<br>');
+        const grid = document.getElementById('gridDisplay');
+        grid.innerHTML = "";
+        const colunas = mapaBinario[0].length;
+        grid.style.gridTemplateColumns = `repeat(${colunas}, 1fr)`;
+        
+        mapaBinario.forEach(linha => {
+            [...linha].forEach(bit => {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.bit = bit;
+                cell.onclick = () => {
+                    sfx.click();
+                    cell.classList.toggle('active');
+                }
+                grid.appendChild(cell);
+            });
+        });
     }
 
     function validar() {
@@ -264,16 +413,22 @@
 
         if(!erro) {
             clearInterval(timerId);
-            sons.sucesso();
-            alert("SISTEMA DECODIFICADO!");
-            if(nivelAtual === progresso && progresso < 2) {
-                progresso++;
-                localStorage.setItem('pixelProgresso', progresso);
+            sfx.win();
+            alert("✓ CÓDIGO COMPILADO COM SUCESSO!");
+            if(nivelAtual === 2) {
+                alert("PARABÉNS! VOCÊ DECODIFICOU A MATRIX.");
+                localStorage.removeItem('pixelProgresso');
+                location.reload(); 
+            } else {
+                if(nivelAtual === progresso) {
+                    progresso++;
+                    localStorage.setItem('pixelProgresso', progresso);
+                }
+                irParaHome();
             }
-            irParaHome();
         } else {
-            sons.erro();
-            alert("SEQUÊNCIA INCORRETA!");
+            sfx.error();
+            alert("× ERRO NA SEQUÊNCIA! Verifique os bits.");
         }
     }
 
@@ -281,22 +436,64 @@
         clearInterval(timerId);
         document.getElementById('jogoTela').classList.remove('active');
         document.getElementById('telaMenu').classList.add('active');
-        atualizarMenu();
+        atualizarBotoesMenu();
     }
 
-    function atualizarMenu() {
+    function atualizarBotoesMenu() {
         for(let i=0; i<3; i++) {
-            const btn = document.getElementById(`fase${i}`);
-            btn.classList.toggle('liberada', i <= progresso);
+            const b = document.getElementById(`fase${i}`);
+            if(i <= progresso) b.classList.add('liberada');
+            else b.classList.remove('liberada');
         }
     }
 
+    document.getElementById('fileInput').onchange = function(e) {
+        if (!e.target.files[0]) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                const hCanvas = document.getElementById('helperCanvas');
+                const hCtx = hCanvas.getContext('2d');
+                const sizes = [4, 6, 8];
+                const pSeguro = progresso > 2 ? 2 : progresso;
+                const size = sizes[pSeguro];
+                nivelAtual = pSeguro;
+
+                hCanvas.width = size; hCanvas.height = size;
+                hCtx.drawImage(img, 0, 0, size, size);
+                const pixels = hCtx.getImageData(0, 0, size, size).data;
+                
+                let novoMapa = [];
+                for (let y = 0; y < size; y++) {
+                    let linha = "";
+                    for (let x = 0; x < size; x++) {
+                        const i = (y * size + x) * 4;
+                        const avg = (pixels[i] + pixels[i+1] + pixels[i+2]) / 3;
+                        linha += (avg < 128) ? "1" : "0";
+                    }
+                    novoMapa.push(linha);
+                }
+
+                mapaBinario = novoMapa;
+                document.getElementById('statusFase').textContent = `INJECTED_MÓDULO_0${nivelAtual+1}`;
+                document.getElementById('nomeObjeto').textContent = "EXT_DATA.RAW";
+                montarJogo();
+                iniciarTimer(60);
+                e.target.value = ""; 
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    };
+
     function limpar() {
-        sons.click();
+        sfx.click();
         document.querySelectorAll('.cell').forEach(c => c.classList.remove('active'));
     }
 
-    atualizarMenu();
+    atualizarBotoesMenu();
 </script>
 </body>
 </html>
